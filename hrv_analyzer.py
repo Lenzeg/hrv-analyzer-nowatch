@@ -7,7 +7,7 @@ import datetime as dt
 import numpy as np
 from datetime import datetime
 from datetime import timedelta
-from hrvanalysis import get_frequency_domain_features, remove_outliers
+from hrvanalysis import get_frequency_domain_features, remove_outliers, interpolate_nan_values
 import freq_psd
 # from dateutil.relativedelta import relativedelta # to add days or years
 
@@ -154,7 +154,7 @@ def remove_outliers(df,type='normal',size=60):
 def analyzer(df,start_time,end_time):
     st.title('Results')    
     st.write('Interbeat Intervals')
-
+    
     df_window = df.query("index >= @start_time and index < @end_time")
     # This remove outliers from signal
     # rr_intervals_without_outliers = remove_outliers(rr_intervals=rr_intervals,  
@@ -163,7 +163,10 @@ def analyzer(df,start_time,end_time):
     # interpolated_rr_intervals = list(interpolate_nan_values(rr_intervals=rr_intervals_without_outliers,
     #                                                 interpolation_method="linear"))
     df_window['inter_beat_interval'] = remove_outliers(df_window['inter_beat_interval'])
+    df_window['inter_beat_interval'] = df_window['inter_beat_interval'].interpolate(method='linear')
     rr_intervals = df_window['inter_beat_interval']
+
+    st.write(df_window)
     st.line_chart(rr_intervals)
     
     # st.table(df_window.head())
@@ -254,43 +257,55 @@ def main():
         # st.write(df.index.max())
 #         st.write(min_value.dtype)
         
-        Model = st.slider(
-            'Pick a RR-interval window:',
-            min_value=min_value,
-            max_value=max_value,
-            format = "HH:mm",
-            step = timedelta(minutes=2),
-            value=value,
-            )
+        # Model = st.slider(
+        #     'Pick a RR-interval window:',
+        #     min_value=min_value,
+        #     max_value=max_value,
+        #     format = "HH:mm",
+        #     step = timedelta(minutes=2),
+        #     value=value,
+        #     )
 
 
-        selmin, selmax = Model
-        selmind = selmin.strftime('%H:%M:%S')  # datetime to str
-        selmaxd = selmax.strftime('%H:%M:%S')
+        # selmin, selmax = Model
+        selmind = min_value.strftime('%H:%M')  # datetime to str
+        selmaxd = max_value.strftime('%H:%M')
         
-        st.write('Or pick a time here')
+        # st.write('Or pick a time here')
 
-        times = []
-        for hours in range(0, 23):
-            for minutes in range(0, 59):
-                times.append(datetime.time(hours, minutes))
-        st.selectbox("Time", times, key="time", format_func=lambda t: t.strftime("%H:%M"))
+        unique_dates = np.unique(df.index.date)
+        start_date = st.selectbox(options=unique_dates,label='Start Date:')
+        start_time = st.text_input(label='Time:',placeholder=selmind)
+        start_datetime_str = f"{start_date} {start_time}"
+        if len(start_time) == 5:
+            start_datetime = datetime.strptime(start_datetime_str, '%Y-%m-%d %H:%M')
+        # st.write(start_date, start_time)
+
+        if start_time:
+            end_date = st.selectbox(options=unique_dates,label='End Date:',index=len(unique_dates)-1)
+            end_time = st.text_input(label='Time:',placeholder=selmaxd)
+            # Concatenate the end date and end time strings
+            end_datetime_str = f"{end_date} {end_time}"
+            if len(end_time) == 5:
+                end_datetime = datetime.strptime(end_datetime_str, '%Y-%m-%d %H:%M')
+
+            # st.write(end_date, end_time)
 
         st.markdown("""---""")
         
         st.write('\n')
 
         st.write('\n')
-
-        st.write("Selected window:", selmin, " - ", selmax)
+        if start_time and end_time:
+            st.write("Selected window:", start_datetime, " - ", end_datetime)
         # st.write(selmax)
         
         with st.form(key="my_form"):
             _, _, _, col, _, _, _ = st.columns([1]*6+[1])
             submitted = col.form_submit_button("Start analyzing")
             # submitted = st.form_submit_button("Start analyzing")
-            if submitted and selmin:
-                analyzer(df, selmin, selmax)
+            if submitted and start_datetime and end_datetime:
+                analyzer(df, start_datetime, end_datetime)
                 # st.write("Running analyzer...")
                 
 
