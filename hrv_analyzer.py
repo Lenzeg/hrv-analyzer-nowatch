@@ -32,7 +32,7 @@ def load_data(file):
         df = pd.read_csv(file, index_col=0, parse_dates=True)
     elif file.name.endswith('.parquet'):
         df = pd.read_parquet(file)
-        print(df)
+        # print(df)
         # if 'timestamp'
     else:
         raise ValueError("Unsupported file type: " + file.name)
@@ -52,7 +52,7 @@ def load_data(file):
         # st.write(df.columns)
         # st.stop()
     # else:
-    print(df.index.dtype)
+    # print(df.index.dtype)
     if not str(df.index.dtype).startswith('datetime64'):
         df = df.set_index('timestamp')
 
