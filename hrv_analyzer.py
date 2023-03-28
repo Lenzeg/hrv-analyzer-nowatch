@@ -259,7 +259,7 @@ def main():
             min_value=min_value,
             max_value=max_value,
             format = "HH:mm",
-            step = timedelta(seconds=30),
+            step = timedelta(minute=2),
             value=value,
             )
 
@@ -268,6 +268,9 @@ def main():
         selmind = selmin.strftime('%H:%M:%S')  # datetime to str
         selmaxd = selmax.strftime('%H:%M:%S')
         
+        st.write('Or pick a time here')
+        t = st.time_input('Set an alarm for', datetime.time(8, 22))
+        st.write('Alarm is set for', t)
 
         st.markdown("""---""")
         
@@ -290,7 +293,7 @@ def main():
 if __name__ == '__main__':
     # Set page title
     # st.set_page_config(page_title="HRV Dashboard")
-
+    # st.set_page_config(layout="wide") 
     # Set app URL
     # app_url = 'https://hrv.lenn.dev'
     # st.write(f'<iframe src="{app_url}" width="100%" height="900" frameborder="0" scrolling="no"></iframe>', unsafe_allow_html=True)
