@@ -269,8 +269,11 @@ def main():
         selmaxd = selmax.strftime('%H:%M:%S')
         
         st.write('Or pick a time here')
-        t = st.time_input('Set an alarm for', datetime.time(8, 22))
-        st.write('Alarm is set for', t)
+        times = []
+        for hours in range(0, 23):
+            for minutes in range(0, 59):
+                times.append(datetime.time(hours, minutes))
+        st.selectbox("Time", times, key="time", format_func=lambda t: t.strftime("%H:%M"))
 
         st.markdown("""---""")
         
