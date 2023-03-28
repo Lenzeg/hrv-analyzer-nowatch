@@ -287,4 +287,10 @@ def main():
                 
 
 if __name__ == '__main__':
+    # Set page title
+    st.set_page_config(page_title="HRV Dashboard")
+
+    # Set app URL
+    app_url = 'https://hrv.lenn.dev'
+    st.write(f'<iframe src="{app_url}" width="100%" height="900" frameborder="0" scrolling="no"></iframe>', unsafe_allow_html=True)
     main()
