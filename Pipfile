@@ -5,12 +5,8 @@ name = "pypi"
 
 [packages]
 streamlit = "*"
-sklearn = "*"
-pandas = "*"
 hrv-analysis = "*"
 matplotlib = "*"
-numpy = "*"
-scipy = "*"
 
 [dev-packages]
 
