@@ -289,7 +289,7 @@ def main():
 
 if __name__ == '__main__':
     # Set page title
-    st.set_page_config(page_title="HRV Dashboard")
+    # st.set_page_config(page_title="HRV Dashboard")
 
     # Set app URL
     app_url = 'https://hrv.lenn.dev'
