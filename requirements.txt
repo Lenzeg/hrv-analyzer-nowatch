@@ -1,0 +1,7 @@
+sklearn
+pandas
+hrv-analysis
+matplotlib
+numpy
+scipy
+streamlit
