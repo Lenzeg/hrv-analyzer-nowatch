@@ -227,7 +227,7 @@ def main():
             df, hrv_col = load_data(file)
             # st.table(df.head())
     else:
-        file = st.file_uploader("Upload a parquet file containing interbeat intervals. ",type='csv')
+        file = st.file_uploader("Upload a csv file containing interbeat intervals. ",type='csv')
         if file is not None:
             df = process_ibi(file)
             # st.table(df.head())
