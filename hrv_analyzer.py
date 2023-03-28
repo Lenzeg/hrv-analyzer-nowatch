@@ -157,8 +157,8 @@ def remove_outliers(df,type='normal',size=30):
 
 def analyzer(df,start_time,end_time):
     st.title('Results')    
-    st.write('Interbeat Intervals')
     
+    st.write('**Pre-Processing**')
     df_window = df.query("index >= @start_time and index < @end_time")
     # This remove outliers from signal
     # rr_intervals_without_outliers = remove_outliers(rr_intervals=rr_intervals,  
@@ -170,6 +170,7 @@ def analyzer(df,start_time,end_time):
     df_index, df_rri = freq_psd.threshold_filter(df_window['inter_beat_interval'],threshold='strong',local_median_size=5)
     data = {'inter_beat_interval': df_rri}
     df_window = pd.DataFrame(data, index=df_index)
+    # df_window['inter_beat_interval'] = freq_psd.moving_median(df_window)
     df_window['inter_beat_interval'] = df_window['inter_beat_interval'].interpolate(method='linear')
     rr_intervals = df_window['inter_beat_interval']
 
@@ -191,15 +192,31 @@ def analyzer(df,start_time,end_time):
     # ax.set_title('Inter-Beat Intervals over Time')
     # fig = px.line(rr_intervals,markers=True)
     st.line_chart(rr_intervals)
-    
+    # st.table(rr_intervals.head())
     # st.table(df_window.head())
     timedomain_values = timedomain(rr_intervals)
+
+
+
+
+
+    # if ibi_df.index.duplicated().sum() == 0:
 
     # st.write(timedomain_values)
     time_df = pd.DataFrame.from_dict(timedomain_values,orient='index',columns=['value'])
     # st.write(time_df)
     st.write('**Time Domain**')
     st.table(time_df)
+
+    st.write("*RMSSD Trend*")
+    rmssd = rr_intervals.rolling('5min',center=True).apply(freq_psd.do_rmssd)
+    rmssd_trend = freq_psd.get_trend_line(rmssd)
+
+    fig, ax = plt.subplots(figsize=(20,7))
+    ax.plot(rmssd.index, rmssd.values, '-')
+    ax.plot(rmssd.index, rmssd_trend.values, '-')
+
+    st.pyplot(fig)
 
     frequency_values = get_frequency_domain_features(rr_intervals)
     for key in frequency_values:

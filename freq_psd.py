@@ -10,7 +10,7 @@ import matplotlib.style as style
 import io
 import streamlit as st
 from scipy.interpolate import CubicSpline
-
+import pandas as pd
 # Frequency Methods name
 WELCH_METHOD = "welch"
 LOMB_METHOD = "lomb"
@@ -250,3 +250,34 @@ def threshold_filter(df, threshold="medium", local_median_size=5):
     # st.write(cubic_spline)
     return time_temp, rri_temp
 
+
+def moving_median(df, order=2):
+    moving_median = df['inter_beat_interval'].rolling(order,center=True).median()
+    return moving_median
+
+def do_rmssd(window):
+    if len(window) > 1:
+        rmssd = np.sqrt(np.mean(np.square(np.diff(window))))
+        return rmssd
+    else:
+        # Can't do mean on empty window, returning 0 for first row.
+        return 0
+    
+def get_trend_line(df):
+    valid_mask = ~df.isna()
+    segment_ids = valid_mask.ne(valid_mask.shift()).cumsum()[valid_mask]
+    segments = df[valid_mask].groupby(segment_ids)
+
+    # fit separate regression lines for each segment
+    trends = []
+    for _, segment in segments:
+        fit = np.polyfit(range(len(segment)), segment, 3)
+        trend = np.poly1d(fit)
+        trends.append(trend(range(len(segment))))
+
+    # combine trends into single series
+    trend_df = pd.DataFrame(index=df.index, columns=['trend'])
+    trend_df.loc[valid_mask, 'trend'] = np.concatenate(trends)
+    trend_df['trend'] = trend_df['trend'].interpolate(method='polynomial', order=2, limit=60, limit_direction='forward')
+
+    return trend_df['trend']
