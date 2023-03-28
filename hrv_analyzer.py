@@ -32,6 +32,7 @@ def load_data(file):
         df = pd.read_csv(file, index_col=0, parse_dates=True)
     elif file.name.endswith('.parquet'):
         df = pd.read_parquet(file)
+        # if 'timestamp'
     else:
         raise ValueError("Unsupported file type: " + file.name)
 
@@ -47,6 +48,7 @@ def load_data(file):
         
     if 'timestamp' not in df.columns:
         st.error(f"No timestamp found, aborting.")
+        st.write(df.columns)
         st.stop()
     else:
         df = df.set_index('timestamp')
