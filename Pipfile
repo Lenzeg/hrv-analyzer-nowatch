@@ -6,6 +6,7 @@ name = "pypi"
 [packages]
 streamlit = "*"
 hrv-analysis = "*"
+importlib_resources = "*"
 
 [dev-packages]
 
