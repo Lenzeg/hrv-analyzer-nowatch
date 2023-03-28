@@ -9,6 +9,10 @@ from datetime import datetime
 from datetime import timedelta
 from hrvanalysis import get_frequency_domain_features, remove_outliers, interpolate_nan_values
 import freq_psd
+import matplotlib.pyplot as plt
+import matplotlib.style as style
+# import plotly.express as px
+
 # from dateutil.relativedelta import relativedelta # to add days or years
 
 # import plotly.graph_objs as go
@@ -167,6 +171,22 @@ def analyzer(df,start_time,end_time):
     rr_intervals = df_window['inter_beat_interval']
 
     st.write(df_window)
+
+    # # Create the figure and axes objects
+    # fig, ax = plt.subplots()
+
+    # # Plot the rr_intervals series as a line with blue markers
+    # ax.plot(rr_intervals.index, rr_intervals.values, '-o', color='blue', markersize=3)
+
+    # # Set the x-axis label
+    # ax.set_xlabel('Date and Time')
+
+    # # Set the y-axis label
+    # ax.set_ylabel('Inter-Beat Interval (ms)')
+
+    # # Set the title of the plot
+    # ax.set_title('Inter-Beat Intervals over Time')
+    # fig = px.line(rr_intervals,markers=True)
     st.line_chart(rr_intervals)
     
     # st.table(df_window.head())
@@ -175,7 +195,7 @@ def analyzer(df,start_time,end_time):
     # st.write(timedomain_values)
     time_df = pd.DataFrame.from_dict(timedomain_values,orient='index',columns=['value'])
     # st.write(time_df)
-    st.write('Time Domain')
+    st.write('**Time Domain**')
     st.table(time_df)
 
     frequency_values = get_frequency_domain_features(rr_intervals)
@@ -183,7 +203,7 @@ def analyzer(df,start_time,end_time):
     # rounding to K using round()
         # if key != 'lf_hf_ratio':
         frequency_values[key] = '{:.2f}'.format(frequency_values[key]).rstrip('0').rstrip('.')
-    st.write('Frequency Domain')
+    st.write('**Frequency Domain**')
     freq_df = pd.DataFrame.from_dict(frequency_values,orient='index',columns=['value'])
 
 
