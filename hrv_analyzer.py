@@ -259,7 +259,7 @@ def main():
             min_value=min_value,
             max_value=max_value,
             format = "HH:mm",
-            step = timedelta(minute=2),
+            step = timedelta(minutes=2),
             value=value,
             )
 
