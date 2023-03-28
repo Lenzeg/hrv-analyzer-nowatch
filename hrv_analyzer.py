@@ -6,7 +6,7 @@ import datetime as dt
 import numpy as np
 from datetime import datetime
 from datetime import timedelta
-from hrvanalysis import get_frequency_domain_features, remove_outliers, interpolate_nan_values
+from hrvanalysis import get_frequency_domain_features, remove_outliers
 import freq_psd
 # from dateutil.relativedelta import relativedelta # to add days or years
 
