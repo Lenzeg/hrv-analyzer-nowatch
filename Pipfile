@@ -5,6 +5,7 @@ name = "pypi"
 
 [packages]
 streamlit = "*"
+hrv-analysis = "*"
 
 [dev-packages]
 
