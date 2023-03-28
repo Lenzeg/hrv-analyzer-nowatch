@@ -225,12 +225,12 @@ def main():
         file = st.file_uploader("Upload a parquet file containing interbeat intervals. ",type='parquet')
         if file is not None:
             df, hrv_col = load_data(file)
-            st.table(df.head())
+            # st.table(df.head())
     else:
         file = st.file_uploader("Upload a parquet file containing interbeat intervals. ",type='csv')
         if file is not None:
             df = process_ibi(file)
-            st.table(df.head())
+            # st.table(df.head())
         # st.write("You didn\'t select comedy.")
     # file = st.file_uploader("Upload a parquet file containing interbeat intervals. ")
     # csv_file = st.file_uploader("Upload hearbeats.csv")
