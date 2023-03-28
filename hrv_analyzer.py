@@ -113,7 +113,7 @@ def timedomain(rr):
     results['pNNxx (%)'] = 100 * np.sum((np.abs(np.diff(rr)) > 50)*1) / len(rr)
     return results
 
-def remove_outliers(df,type='normal',size=60):
+def remove_outliers(df,type='normal',size=30):
     arr = df.to_numpy()
     outlier_counter = 0
     middle = int(size/2)
@@ -167,6 +167,9 @@ def analyzer(df,start_time,end_time):
     # interpolated_rr_intervals = list(interpolate_nan_values(rr_intervals=rr_intervals_without_outliers,
     #                                                 interpolation_method="linear"))
     df_window['inter_beat_interval'] = remove_outliers(df_window['inter_beat_interval'])
+    df_index, df_rri = freq_psd.threshold_filter(df_window['inter_beat_interval'],threshold='strong',local_median_size=5)
+    data = {'inter_beat_interval': df_rri}
+    df_window = pd.DataFrame(data, index=df_index)
     df_window['inter_beat_interval'] = df_window['inter_beat_interval'].interpolate(method='linear')
     rr_intervals = df_window['inter_beat_interval']
 

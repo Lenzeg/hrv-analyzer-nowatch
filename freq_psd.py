@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 import matplotlib.style as style
 import io
 import streamlit as st
+from scipy.interpolate import CubicSpline
 
 # Frequency Methods name
 WELCH_METHOD = "welch"
@@ -168,4 +169,84 @@ def plot_psd(nn_intervals: List[float], method: str = "welch", sampling_frequenc
         raise ValueError("Not a valid method. Choose between 'lomb' and 'welch'")
 
     st.pyplot(fig)
+
+def threshold_filter(df, threshold="medium", local_median_size=5):
+    """
+    Low-pass filter. Inspired by the threshold-based artifact correction
+    algorithm offered by Kubios®. To elect outliers in the tachogram series,
+    each RRi is compared to the median value of local RRi (default N=5).
+    All the RRi which the difference is greater than the local median value
+    plus a threshold is replaced by cubic spline interpolated RRi.
+    Parameters
+    ----------
+    rri : array_like
+        sequence containing the RRi series
+    threshold : str or int, optional
+        Strength of the filter. If str will be translated to a threshold
+        in miliseconds according to the dict below. If int, it is considered
+        the threshold in miliseconds. Defaults to 'medium' (250ms)
+        - Very Low: 450ms
+        - Low: 350ms
+        - Medium: 250ms
+        - Strong: 150ms
+        - Very Strong: 50ms
+    local_median_size : int, optional
+        Number of RRi values considered to caculate a local median to be
+        compared with each RRi value
+    .. math::
+        considering the threshold equal to 'medium' and local_median_size
+        equal to 5:
+            local median RRi = np.median([RRi[j-5], RRi[j-4], RRi[j-3],                          RRi[j-2], RRi[j-1]])
+            - Ectopic beat, if abs(RRi[j] - local median RRi) > 250
+            - Normal beat, if abs(RRi[j] - local median RRi) <= 250
+    Returns
+    -------
+    results : RRi array
+        instance of the RRi class containing the filtered and cubic
+        interpolated RRi values
+    See Also
+    -------
+    moving_average, threshold_filter, quotient
+    Examples
+    --------
+    >>> from hrv.filters import moving_average
+    >>> from hrv.sampledata import load_noisy_rri
+    >>> noisy_rri = load_noisy_rri()
+    >>> threshold_filter(noisy_rri)
+    RRi array([904., 913., 937., ..., 704., 805., 808.])
+    """
+    # TODO: DRY
+    rri_time = df.index
+    rri = df.values
+
+    # Filter strength inspired in Kubios threshold based artifact correction
+    strength = {
+        "very low": 450,
+        "low": 350,
+        "medium": 250,
+        "strong": 150,
+        "very strong": 50,
+    }
+    threshold = strength[threshold] if threshold in strength else threshold
+
+    n_rri = len(rri)
+    rri_to_remove = []
+    # Apply filter in the beginning later
+    for j in range(local_median_size, n_rri):
+        slice_ = slice(j - local_median_size, j)
+        if rri[j] > (np.median(rri[slice_]) + threshold):
+            rri_to_remove.append(j)
+
+    first_idx = list(range(local_median_size + 1))
+    for j in range(local_median_size):
+        slice_ = [f for f in first_idx if not f == j]
+        if abs(rri[j] - np.median(rri[slice_])) > threshold:
+            rri_to_remove.append(j)
+
+    rri_temp = [r for idx, r in enumerate(rri) if idx not in rri_to_remove]
+    time_temp = [t for idx, t in enumerate(rri_time) if idx not in rri_to_remove]
+
+    # cubic_spline = CubicSpline(time_temp, rri_temp)
+    # st.write(cubic_spline)
+    return time_temp, rri_temp
 
