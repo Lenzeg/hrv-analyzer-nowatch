@@ -102,6 +102,10 @@ def timestamp_conversion(df):
 
     return times_ms
 
+def get_rhr(rr):
+    hr = 60000/rr
+    rhr = np.min(hr)
+    return rhr
 def timedomain(rr):
     results = {}
 
@@ -218,10 +222,12 @@ def analyzer(df,start_time,end_time):
     rmssd = rr_intervals.rolling('5min',center=True).apply(freq_psd.do_rmssd)
     rmssd_trend = freq_psd.get_trend_line(rmssd)
 
-    fig, ax = plt.subplots(figsize=(20,7))
-    ax.plot(rmssd.index, rmssd.values, '-')
-    ax.plot(rmssd.index, rmssd_trend.values, '-')
-
+    fig, ax = plt.subplots(figsize=(20,10))
+    ax.plot(rmssd.index, rmssd.values, '-',label='rmssd')
+    ax.plot(rmssd.index, rmssd_trend.values, '-',label='trend')
+    ax.set_ylabel('Value (ms)', color = 'black')
+    ax.set_xlabel('Time', color = 'black')
+    ax.legend(loc='best')
     st.pyplot(fig)
 
     frequency_values = get_frequency_domain_features(rr_intervals)
@@ -229,6 +235,19 @@ def analyzer(df,start_time,end_time):
     # rounding to K using round()
         # if key != 'lf_hf_ratio':
         frequency_values[key] = '{:.2f}'.format(frequency_values[key]).rstrip('0').rstrip('.')
+
+    st.write("*RHR calculated using HRV*")
+
+    rhr = rr_intervals.rolling('1min',center=True).apply(get_rhr).rolling('10min').mean()
+    rhr_trend = freq_psd.get_trend_line(rhr)
+    fig, ax = plt.subplots(figsize=(20,10))
+    ax.plot(rhr.index, rhr.values, '-',label='resting heart rate')
+    ax.plot(rhr.index, rhr_trend.values, '-',label='trend')
+    ax.set_ylabel('Value (bpm)', color = 'black')
+    ax.set_xlabel('Time', color = 'black')
+    ax.legend(loc='best')
+    st.pyplot(fig)
+
     st.write('**Frequency Domain**')
     freq_df = pd.DataFrame.from_dict(frequency_values,orient='index',columns=['value'])
 
