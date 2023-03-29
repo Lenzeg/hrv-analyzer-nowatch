@@ -257,6 +257,7 @@ def get_time_range(df, timezone):
 
 def main():
     df = None
+    end_datetime = None
     # st.title("HRV Analyzer")
     st.markdown("<h1 style='text-align: center; color: black;'>HRV Analyzer</h1>", unsafe_allow_html=True)
     st.markdown("<h2 style='text-align: center; color: grey;'>NOWATCH</h1>", unsafe_allow_html=True)
@@ -348,7 +349,7 @@ def main():
         
         with st.form(key="my_form"):
             _, _, _, col, _, _, _ = st.columns([1]*6+[1])
-            submitted = col.form_submit_button("Start analyzing")
+            submitted = col.form_submit_button("Start analyzing", disabled=(end_datetime is None))
             # submitted = st.form_submit_button("Start analyzing")
             if submitted and start_datetime and end_datetime:
                 analyzer(df, start_datetime, end_datetime)
