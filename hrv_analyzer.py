@@ -349,7 +349,7 @@ def analyzer(df,start_time,end_time, openai_key, moments_df):
             # text = st.empty()
             # show_messages(text)
             # ']])
-            print(frequency_values['lf'])
+            print(timedomain_values['RMSSD (ms)'])
             rmssd_ms = int(float(timedomain_values['RMSSD (ms)']))
             lf = int(float(frequency_values['lf']))
             hf = int(float(frequency_values['hf']))
@@ -374,7 +374,8 @@ def analyzer(df,start_time,end_time, openai_key, moments_df):
                 st.write(message_response)
 
             if st.form_submit_button("Clear"):
-                st.session_state["messages"] = BASE_PROMPT
+                prompt = ""
+                # st.session_state["messages"] = BASE_PROMPT
             # show_messages(text)
     # Display the bar chart using st.bar_chart
     # st.bar_chart(lf_hf_df)
@@ -413,6 +414,7 @@ def main():
             # st.table(df.head())
     else:
         file = st.file_uploader("Upload a csv file containing interbeat intervals. ",type='csv')
+        
         if file is not None:
             df = process_ibi(file)
             # st.table(df.head())
@@ -480,14 +482,28 @@ def main():
                 openai_key = st.text_input(label='OpenAI API Key (optional): ',placeholder="...")
                 moments = st.file_uploader("Upload Moments (optional): ",type='csv')
                 if moments is not None:
-                    moments_df = pd.read_csv(moments).drop('value',axis=1).set_index('timestamp')
-                    moments_df = moments_df[moments_df['type'] == 'MOMENT']
-                    moments_df.index = pd.to_datetime(moments_df.index) + timedelta(hours=timezone)
-                    if not moments_df.empty:
-                        MOMENTS = True
-                        st.write(moments_df)
-                else:
-                    moments_df = None
+                    filename = str(moments.name)
+
+                    if filename.startswith('system'):
+                        moments_df = pd.read_csv(moments).drop('value',axis=1)
+                        moments_df['timestamp'] = pd.to_datetime(moments_df['timestamp'],unit='s')
+                        moments_df = moments_df[moments_df['type'] == 'MOMENT']
+                        moments_df = moments_df.set_index('timestamp')
+                        moments_df.index = moments_df.index + timedelta(hours=timezone)
+                        if not moments_df.empty:
+                            MOMENTS = True
+                            st.write(moments_df)
+                    elif filename.startswith('moment'):                    
+                        if moments is not None:
+                            moments_df = pd.read_csv(moments).drop('value',axis=1).set_index('timestamp')
+                            moments_df = moments_df[moments_df['type'] == 'MOMENT']
+                            moments_df.index = pd.to_datetime(moments_df.index) + timedelta(hours=timezone)
+                            if not moments_df.empty:
+                                MOMENTS = True
+                                st.write(moments_df)
+                    else:
+                        st.write("No moments found")
+                        moments_df = None
         st.markdown("""---""")
         
         st.write('\n')
