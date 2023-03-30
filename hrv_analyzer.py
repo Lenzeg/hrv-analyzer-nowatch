@@ -11,6 +11,9 @@ from hrvanalysis import get_frequency_domain_features, remove_outliers, interpol
 import freq_psd
 import matplotlib.pyplot as plt
 import matplotlib.style as style
+import openai
+import toml 
+
 # import plotly.express as px
 
 # from dateutil.relativedelta import relativedelta # to add days or years
@@ -170,6 +173,8 @@ def analyzer(df,start_time,end_time):
     
     st.write('**Pre-Processing**')
     df_window = df.query("index >= @start_time and index < @end_time")
+    diff = (end_time - start_time) / pd.Timedelta(minutes=1)
+    print(diff)
     # This remove outliers from signal
     # rr_intervals_without_outliers = remove_outliers(rr_intervals=rr_intervals,  
     #                                                 low_rri=300, high_rri=2000)
@@ -273,8 +278,72 @@ def analyzer(df,start_time,end_time):
     st.table(freq_df)
     freq_psd.plot_psd(rr_intervals, method="welch")
     
+    # if st.button('start configuration'):
+        # st.session_state['step'] = 1
+  
+    # if st.session_state['step'] == 1:
+        # with st.form('my form'):
+        #     st.session_state['number'] = st.number_input('choose a number', 1, 13)
+        #     if st.form_submit_button("save configuration"):            
+        #         st.session_state['step'] = 2
+        #         st.experimental_rerun()  # form should not be shown after clicking 'save' 
+    
+
+    # with st.form(key="chatgpt"):
+        # _, _, _, col, _, _, _ = st.columns([1]*6+[1])
+        # run_chat = st.form_submit_button("Ask ChatGPT about my score", disabled=(freq_df is None))
+        # submitted = st.form_submit_button("Start analyzing")
+        # if run_chat:
+
+    # st.write(timedomain_values['RMSSD (ms)'], frequency_values['lf'], frequency_values['hf'],frequency_values['lf_hf_ratio'])
+    if not freq_df.empty and not time_df.empty:
+
+        def show_messages(text):
+            messages_str = [
+                f"{_['role']}: {_['content']}" for _ in st.session_state["messages"][1:]
+            ]
+            text.text_area("Messages", value=str("\n".join(messages_str)), height=400)
 
 
+
+        with open("secrets.toml", "r") as f:
+            config = toml.load(f)
+
+        openai.api_key = config["OPENAI_KEY"]
+        BASE_PROMPT = [{"role": "system", "content": "You are a helpful assistant."}]
+
+        if "messages" not in st.session_state:
+            st.session_state["messages"] = BASE_PROMPT
+
+        st.header("ChatGPT HRV Analysis")
+        # st.markdown("""---""")
+
+        # text = st.empty()
+        # show_messages(text)
+        # ']])
+
+        prompt = f"Tell me about my HRV: RMSSD (ms): {timedomain_values['RMSSD (ms)']} and my LF, HF, and LF HF Ratio in Hz: , {frequency_values['lf'], frequency_values['hf'],frequency_values['lf_hf_ratio']}. The total time of measurement was {diff} minutes. Don't use more than 200 words. Keep it simple and motivating, very positive, and talk about mental balance. Explain how it relates to mental balance. Always display the values."
+        # st.write(len(prompt))
+        # if st.form_submit_button("Send"):
+        with st.spinner("Generating response..."):
+            st.session_state["messages"] += [{"role": "user", "content": prompt}]
+            response = openai.ChatCompletion.create(
+                model="gpt-3.5-turbo", messages=st.session_state["messages"],
+                temperature=0.5,
+                max_tokens=500,
+
+
+            )
+            message_response = response["choices"][0]["message"]["content"]
+            # st.session_state["messages"] += [
+            #     {"role": "system", "content": message_response}
+            # ]
+            # show_messages(text)
+            st.write(message_response)
+
+        if st.form_submit_button("Clear"):
+            st.session_state["messages"] = BASE_PROMPT
+            # show_messages(text)
     # Display the bar chart using st.bar_chart
     # st.bar_chart(lf_hf_df)
     # st.bar_chart(freq_df.iloc['lf','hf']])
@@ -390,6 +459,7 @@ def main():
             # submitted = st.form_submit_button("Start analyzing")
             if submitted and start_datetime and end_datetime:
                 analyzer(df, start_datetime, end_datetime)
+
                 # st.write("Running analyzer...")
                 
 
