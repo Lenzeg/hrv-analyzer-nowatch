@@ -240,7 +240,7 @@ def analyzer(df,start_time,end_time, openai_key, moments_df):
         for moment in moments_df.index:
             ax.axvline(x=moment, ymin=ymin, ymax=ymax, color='red', alpha=0.8)
             # ax.text(0.5, -0.1, 'MOMENT', transform=ax.transAxes, ha='center', va='center')
-            ax.text(moment, ymin-0.05*(ymax-ymin), 'MOMENT', ha='center', va='center', color='red')
+            ax.text(moment, ymin-0.1*(ymax-ymin), 'MOMENT', ha='center', va='center', color='red')
 
             handles, labels = ax.get_legend_handles_labels()
             handles.append(ax.axvline(x=moments_df.index[0], ymin=0, ymax=1, color='red'))
@@ -251,7 +251,7 @@ def analyzer(df,start_time,end_time, openai_key, moments_df):
     st.pyplot(rmssd_fig)
     rmssd_fig.clf()
     ax.cla()
-    
+
     st.write("*RHR calculated using HRV*")
 
     rhr = rr_intervals.rolling('1min',center=True).apply(get_rhr).rolling('5min').mean()
@@ -269,7 +269,7 @@ def analyzer(df,start_time,end_time, openai_key, moments_df):
         for moment in moments_df.index:
             ax.axvline(x=moment, ymin=ymin, ymax=ymax, color='red', alpha=0.8)
             # ax.text(0.5, -0.1, 'MOMENT', transform=ax.transAxes, ha='center', va='center')
-            ax.text(moment, ymin-0.05*(ymax-ymin), 'MOMENT', ha='center', va='center', color='red')
+            ax.text(moment, ymin-0.1*(ymax-ymin), 'MOMENT', ha='center', va='center', color='red')
             handles, labels = ax.get_legend_handles_labels()
             handles.append(ax.axvline(x=moments_df.index[0], ymin=0, ymax=1, color='red'))
             labels.append('moments')
