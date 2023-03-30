@@ -322,14 +322,14 @@ def analyzer(df,start_time,end_time):
         # show_messages(text)
         # ']])
 
-        prompt = f"Tell me about my HRV: RMSSD (ms): {timedomain_values['RMSSD (ms)']} and my LF, HF, and LF HF Ratio in Hz: , {frequency_values['lf'], frequency_values['hf'],frequency_values['lf_hf_ratio']}. The total time of measurement was {diff} minutes. Don't use more than 200 words. Keep it simple and motivating, very positive, and talk about mental balance. Explain how it relates to mental balance. Always display the values."
+        prompt = f"Tell me about my HRV: RMSSD (ms): {np.round(timedomain_values['RMSSD (ms)'])} and my LF, HF, and LF HF Ratio in Hz: , {np.round(frequency_values['lf']), np.round(frequency_values['hf']),frequency_values['lf_hf_ratio']}. The total time of measurement was {diff} minutes. Don't use more than 200 words. Keep it simple and motivating, very positive, and talk about mental balance. Explain how it relates to mental balance. Always display the values."
         # st.write(len(prompt))
         # if st.form_submit_button("Send"):
         with st.spinner("Generating response..."):
             st.session_state["messages"] += [{"role": "user", "content": prompt}]
             response = openai.ChatCompletion.create(
                 model="gpt-3.5-turbo", messages=st.session_state["messages"],
-                temperature=0.5,
+                temperature=0.3,
                 max_tokens=500,
 
 
