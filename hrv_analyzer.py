@@ -479,6 +479,7 @@ def main():
                 moments = st.file_uploader("Upload Moments (optional): ",type='csv')
                 if moments is not None:
                     moments_df = pd.read_csv(moments).drop('value',axis=1).set_index('timestamp')
+                    moments_df = moments_df[moments_df['type'] == 'MOMENT']
                     moments_df.index = pd.to_datetime(moments_df.index) + timedelta(hours=timezone)
                     if not moments_df.empty:
                         MOMENTS = True
