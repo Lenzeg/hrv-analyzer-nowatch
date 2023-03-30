@@ -280,7 +280,6 @@ def analyzer(df,start_time,end_time):
     
     # if st.button('start configuration'):
         # st.session_state['step'] = 1
-  
     # if st.session_state['step'] == 1:
         # with st.form('my form'):
         #     st.session_state['number'] = st.number_input('choose a number', 1, 13)
@@ -321,8 +320,12 @@ def analyzer(df,start_time,end_time):
         # text = st.empty()
         # show_messages(text)
         # ']])
-
-        prompt = f"Tell me about my HRV: RMSSD (ms): {np.round(timedomain_values['RMSSD (ms)'])} and my LF, HF, and LF HF Ratio in Hz: , {np.round(frequency_values['lf']), np.round(frequency_values['hf']),frequency_values['lf_hf_ratio']}. The total time of measurement was {diff} minutes. Don't use more than 200 words. Keep it simple and motivating, very positive, and talk about mental balance. Explain how it relates to mental balance. Always display the values."
+        print(frequency_values['lf'])
+        rmssd_ms = int(float(timedomain_values['RMSSD (ms)']))
+        lf = int(float(frequency_values['lf']))
+        hf = int(float(frequency_values['hf']))
+        lf_hf = frequency_values['lf_hf_ratio']
+        prompt = f"Tell me about my HRV: RMSSD (ms): {rmssd_ms} and my LF, HF, and LF HF Ratio in Hz: , {lf, hf,lf_hf}. The total time of measurement was {diff} minutes. Don't use more than 200 words. Keep it simple and motivating, very positive, and talk about mental balance. Explain how it relates to mental balance. Always display the values."
         # st.write(len(prompt))
         # if st.form_submit_button("Send"):
         with st.spinner("Generating response..."):
