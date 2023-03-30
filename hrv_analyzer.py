@@ -230,15 +230,9 @@ def analyzer(df,start_time,end_time):
     ax.legend(loc='best')
     st.pyplot(fig)
 
-    frequency_values = get_frequency_domain_features(rr_intervals)
-    for key in frequency_values:
-    # rounding to K using round()
-        # if key != 'lf_hf_ratio':
-        frequency_values[key] = '{:.2f}'.format(frequency_values[key]).rstrip('0').rstrip('.')
-
     st.write("*RHR calculated using HRV*")
 
-    rhr = rr_intervals.rolling('1min',center=True).apply(get_rhr).rolling('10min').mean()
+    rhr = rr_intervals.rolling('1min',center=True).apply(get_rhr).rolling('5min').mean()
     rhr_trend = freq_psd.get_trend_line(rhr)
     fig, ax = plt.subplots(figsize=(20,10))
     ax.plot(rhr.index, rhr.values, '-',label='resting heart rate')
@@ -248,9 +242,33 @@ def analyzer(df,start_time,end_time):
     ax.legend(loc='best')
     st.pyplot(fig)
 
+    ##################################### 
+
+    frequency_values = get_frequency_domain_features(rr_intervals)
+    for key in frequency_values:
+    # rounding to K using round()
+        # if key != 'lf_hf_ratio':
+        frequency_values[key] = '{:.2f}'.format(frequency_values[key]).rstrip('0').rstrip('.')
+
+
     st.write('**Frequency Domain**')
     freq_df = pd.DataFrame.from_dict(frequency_values,orient='index',columns=['value'])
 
+    # def get_lf_hf(window):
+    #     window = list(window)
+    #     frequency_domain_features = get_frequency_domain_features(nn_intervals = window)
+    #     return frequency_domain_features['lf_hf_ratio']
+            
+    
+    # lf_hf = rr_intervals.rolling('5min',center=True).apply(get_lf_hf)
+    # lfhf_trend = freq_psd.get_trend_line(lf_hf)
+    # fig, ax = plt.subplots(figsize=(20,10))
+    # ax.plot(lf_hf.index, lf_hf.values, '-',label='lf hf')
+    # ax.plot(lf_hf.index, lfhf_trend.values, '-',label='trend')
+    # ax.set_ylabel('Value (bpm)', color = 'black')
+    # ax.set_xlabel('Time', color = 'black')
+    # ax.legend(loc='best')
+    # st.pyplot(fig)
 
     st.table(freq_df)
     freq_psd.plot_psd(rr_intervals, method="welch")
