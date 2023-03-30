@@ -168,7 +168,7 @@ def remove_outliers(df,type='normal',size=30):
     st.write(f'        {outlier_counter} outliers removed from {df.name}')
     return arr
 
-def analyzer(df,start_time,end_time):
+def analyzer(df,start_time,end_time, openai_key):
     st.title('Results')    
     
     st.write('**Pre-Processing**')
@@ -295,57 +295,58 @@ def analyzer(df,start_time,end_time):
         # if run_chat:
 
     # st.write(timedomain_values['RMSSD (ms)'], frequency_values['lf'], frequency_values['hf'],frequency_values['lf_hf_ratio'])
-    if not freq_df.empty and not time_df.empty:
+    if openai_key:
+        if not freq_df.empty and not time_df.empty:
 
-        def show_messages(text):
-            messages_str = [
-                f"{_['role']}: {_['content']}" for _ in st.session_state["messages"][1:]
-            ]
-            text.text_area("Messages", value=str("\n".join(messages_str)), height=400)
-
-
-
-        with open("secrets.toml", "r") as f:
-            config = toml.load(f)
-
-        openai.api_key = config["OPENAI_KEY"]
-        BASE_PROMPT = [{"role": "system", "content": "You are a helpful assistant."}]
-
-        if "messages" not in st.session_state:
-            st.session_state["messages"] = BASE_PROMPT
-
-        st.header("ChatGPT HRV Analysis")
-        # st.markdown("""---""")
-
-        # text = st.empty()
-        # show_messages(text)
-        # ']])
-        print(frequency_values['lf'])
-        rmssd_ms = int(float(timedomain_values['RMSSD (ms)']))
-        lf = int(float(frequency_values['lf']))
-        hf = int(float(frequency_values['hf']))
-        lf_hf = frequency_values['lf_hf_ratio']
-        prompt = f"Tell me about my HRV: RMSSD (ms): {rmssd_ms} and my LF, HF, and LF HF Ratio in Hz: , {lf, hf,lf_hf}. The total time of measurement was {diff} minutes. Don't use more than 200 words. Keep it simple and motivating, very positive, and talk about mental balance. Explain how it relates to mental balance. Always display the values."
-        # st.write(len(prompt))
-        # if st.form_submit_button("Send"):
-        with st.spinner("Generating response..."):
-            st.session_state["messages"] += [{"role": "user", "content": prompt}]
-            response = openai.ChatCompletion.create(
-                model="gpt-3.5-turbo", messages=st.session_state["messages"],
-                temperature=0.3,
-                max_tokens=500,
+            def show_messages(text):
+                messages_str = [
+                    f"{_['role']}: {_['content']}" for _ in st.session_state["messages"][1:]
+                ]
+                text.text_area("Messages", value=str("\n".join(messages_str)), height=400)
 
 
-            )
-            message_response = response["choices"][0]["message"]["content"]
-            # st.session_state["messages"] += [
-            #     {"role": "system", "content": message_response}
-            # ]
+
+            with open("secrets.toml", "r") as f:
+                config = toml.load(f)
+
+            openai.api_key = openai_key
+            BASE_PROMPT = [{"role": "system", "content": "You are a helpful assistant."}]
+
+            if "messages" not in st.session_state:
+                st.session_state["messages"] = BASE_PROMPT
+
+            st.header("ChatGPT HRV Analysis")
+            # st.markdown("""---""")
+
+            # text = st.empty()
             # show_messages(text)
-            st.write(message_response)
+            # ']])
+            print(frequency_values['lf'])
+            rmssd_ms = int(float(timedomain_values['RMSSD (ms)']))
+            lf = int(float(frequency_values['lf']))
+            hf = int(float(frequency_values['hf']))
+            lf_hf = frequency_values['lf_hf_ratio']
+            prompt = f"Tell me about my HRV: RMSSD (ms): {rmssd_ms} and my LF, HF, and LF HF Ratio in Hz: , {lf, hf,lf_hf}. The total time of measurement was {diff} minutes. Don't use more than 200 words. Keep it simple and motivating, very positive, and talk about mental balance. Explain how it relates to mental balance. Always display the values."
+            # st.write(len(prompt))
+            # if st.form_submit_button("Send"):
+            with st.spinner("Generating response..."):
+                st.session_state["messages"] += [{"role": "user", "content": prompt}]
+                response = openai.ChatCompletion.create(
+                    model="gpt-3.5-turbo", messages=st.session_state["messages"],
+                    temperature=0.3,
+                    max_tokens=500,
 
-        if st.form_submit_button("Clear"):
-            st.session_state["messages"] = BASE_PROMPT
+
+                )
+                message_response = response["choices"][0]["message"]["content"]
+                # st.session_state["messages"] += [
+                #     {"role": "system", "content": message_response}
+                # ]
+                # show_messages(text)
+                st.write(message_response)
+
+            if st.form_submit_button("Clear"):
+                st.session_state["messages"] = BASE_PROMPT
             # show_messages(text)
     # Display the bar chart using st.bar_chart
     # st.bar_chart(lf_hf_df)
@@ -447,6 +448,9 @@ def main():
 
             # st.write(end_date, end_time)
 
+            if end_time:
+                openai_key = st.text_input(label='OpenAI API Key: (optional)',placeholder="...")
+            
         st.markdown("""---""")
         
         st.write('\n')
@@ -461,7 +465,7 @@ def main():
             submitted = col.form_submit_button("Start analyzing", disabled=(end_datetime is None))
             # submitted = st.form_submit_button("Start analyzing")
             if submitted and start_datetime and end_datetime:
-                analyzer(df, start_datetime, end_datetime)
+                analyzer(df, start_datetime, end_datetime, openai_key)
 
                 # st.write("Running analyzer...")
                 
