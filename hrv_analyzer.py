@@ -305,10 +305,6 @@ def analyzer(df,start_time,end_time, openai_key):
                 text.text_area("Messages", value=str("\n".join(messages_str)), height=400)
 
 
-
-            with open("secrets.toml", "r") as f:
-                config = toml.load(f)
-
             openai.api_key = openai_key
             BASE_PROMPT = [{"role": "system", "content": "You are a helpful assistant."}]
 
