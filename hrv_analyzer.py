@@ -14,6 +14,7 @@ import matplotlib.style as style
 import openai
 import toml 
 
+MOMENTS = False
 # import plotly.express as px
 
 # from dateutil.relativedelta import relativedelta # to add days or years
@@ -168,11 +169,11 @@ def remove_outliers(df,type='normal',size=30):
     st.write(f'        {outlier_counter} outliers removed from {df.name}')
     return arr
 
-def analyzer(df,start_time,end_time, openai_key):
+def analyzer(df,start_time,end_time, openai_key, moments_df):
     st.title('Results')    
-    
     st.write('**Pre-Processing**')
     df_window = df.query("index >= @start_time and index < @end_time")
+    moments_df = moments_df.query("index >= @start_time and index < @end_time")
     diff = (end_time - start_time) / pd.Timedelta(minutes=1)
     print(diff)
     # This remove outliers from signal
@@ -227,25 +228,54 @@ def analyzer(df,start_time,end_time, openai_key):
     rmssd = rr_intervals.rolling('5min',center=True).apply(freq_psd.do_rmssd)
     rmssd_trend = freq_psd.get_trend_line(rmssd)
 
-    fig, ax = plt.subplots(figsize=(20,10))
+    rmssd_fig, ax = plt.subplots(figsize=(20,10))
     ax.plot(rmssd.index, rmssd.values, '-',label='rmssd')
     ax.plot(rmssd.index, rmssd_trend.values, '-',label='trend')
     ax.set_ylabel('Value (ms)', color = 'black')
     ax.set_xlabel('Time', color = 'black')
     ax.legend(loc='best')
-    st.pyplot(fig)
 
+    if not moments_df.empty:
+        ymin, ymax = ax.get_ylim()
+        for moment in moments_df.index:
+            ax.axvline(x=moment, ymin=ymin, ymax=ymax, color='red', alpha=0.8)
+            # ax.text(0.5, -0.1, 'MOMENT', transform=ax.transAxes, ha='center', va='center')
+            ax.text(moment, ymin-0.05*(ymax-ymin), 'MOMENT', ha='center', va='center', color='red')
+
+            handles, labels = ax.get_legend_handles_labels()
+            handles.append(ax.axvline(x=moments_df.index[0], ymin=0, ymax=1, color='red'))
+            labels.append('moment')
+            ax.legend(handles, labels, loc='best')
+
+
+    st.pyplot(rmssd_fig)
+    rmssd_fig.clf()
+    ax.cla()
+    
     st.write("*RHR calculated using HRV*")
 
     rhr = rr_intervals.rolling('1min',center=True).apply(get_rhr).rolling('5min').mean()
     rhr_trend = freq_psd.get_trend_line(rhr)
-    fig, ax = plt.subplots(figsize=(20,10))
+    rhr_fig, ax = plt.subplots(figsize=(20,10))
     ax.plot(rhr.index, rhr.values, '-',label='resting heart rate')
     ax.plot(rhr.index, rhr_trend.values, '-',label='trend')
     ax.set_ylabel('Value (bpm)', color = 'black')
     ax.set_xlabel('Time', color = 'black')
     ax.legend(loc='best')
-    st.pyplot(fig)
+
+
+    if not moments_df.empty:
+        ymin, ymax = ax.get_ylim()
+        for moment in moments_df.index:
+            ax.axvline(x=moment, ymin=ymin, ymax=ymax, color='red', alpha=0.8)
+            # ax.text(0.5, -0.1, 'MOMENT', transform=ax.transAxes, ha='center', va='center')
+            ax.text(moment, ymin-0.05*(ymax-ymin), 'MOMENT', ha='center', va='center', color='red')
+            handles, labels = ax.get_legend_handles_labels()
+            handles.append(ax.axvline(x=moments_df.index[0], ymin=0, ymax=1, color='red'))
+            labels.append('moments')
+            ax.legend(handles, labels, loc='best')
+
+    st.pyplot(rhr_fig)
 
     ##################################### 
 
@@ -445,8 +475,16 @@ def main():
             # st.write(end_date, end_time)
 
             if end_time:
-                openai_key = st.text_input(label='OpenAI API Key: (optional)',placeholder="...")
-            
+                openai_key = st.text_input(label='OpenAI API Key (optional): ',placeholder="...")
+                moments = st.file_uploader("Upload Moments (optional): ",type='csv')
+                if moments is not None:
+                    moments_df = pd.read_csv(moments).drop('value',axis=1).set_index('timestamp')
+                    moments_df.index = pd.to_datetime(moments_df.index) + timedelta(hours=timezone)
+                    if not moments_df.empty:
+                        MOMENTS = True
+                        st.write(moments_df)
+                else:
+                    moments_df = None
         st.markdown("""---""")
         
         st.write('\n')
@@ -461,7 +499,7 @@ def main():
             submitted = col.form_submit_button("Start analyzing", disabled=(end_datetime is None))
             # submitted = st.form_submit_button("Start analyzing")
             if submitted and start_datetime and end_datetime:
-                analyzer(df, start_datetime, end_datetime, openai_key)
+                analyzer(df, start_datetime, end_datetime, openai_key, moments_df)
 
                 # st.write("Running analyzer...")
                 
