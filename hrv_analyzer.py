@@ -173,7 +173,8 @@ def analyzer(df,start_time,end_time, openai_key, moments_df):
     st.title('Results')    
     st.write('**Pre-Processing**')
     df_window = df.query("index >= @start_time and index < @end_time")
-    moments_df = moments_df.query("index >= @start_time and index < @end_time")
+    if moments_df is not None:
+        moments_df = moments_df.query("index >= @start_time and index < @end_time")
     diff = (end_time - start_time) / pd.Timedelta(minutes=1)
     print(diff)
     # This remove outliers from signal
@@ -235,17 +236,18 @@ def analyzer(df,start_time,end_time, openai_key, moments_df):
     ax.set_xlabel('Time', color = 'black')
     ax.legend(loc='best')
 
-    if not moments_df.empty:
-        ymin, ymax = ax.get_ylim()
-        for moment in moments_df.index:
-            ax.axvline(x=moment, ymin=ymin, ymax=ymax, color='red', alpha=0.8)
-            # ax.text(0.5, -0.1, 'MOMENT', transform=ax.transAxes, ha='center', va='center')
-            ax.text(moment, ymin-0.1*(ymax-ymin), 'MOMENT', ha='center', va='center', color='red')
+    if moments_df is not None:
+        if not moments_df.empty:
+            ymin, ymax = ax.get_ylim()
+            for moment in moments_df.index:
+                ax.axvline(x=moment, ymin=ymin, ymax=ymax, color='red', alpha=0.8)
+                # ax.text(0.5, -0.1, 'MOMENT', transform=ax.transAxes, ha='center', va='center')
+                ax.text(moment, ymin-0.1*(ymax-ymin), 'MOMENT', ha='center', va='center', color='red')
 
-            handles, labels = ax.get_legend_handles_labels()
-            handles.append(ax.axvline(x=moments_df.index[0], ymin=0, ymax=1, color='red'))
-            labels.append('moment')
-            ax.legend(handles, labels, loc='best')
+                handles, labels = ax.get_legend_handles_labels()
+                handles.append(ax.axvline(x=moments_df.index[0], ymin=0, ymax=1, color='red'))
+                labels.append('moment')
+                ax.legend(handles, labels, loc='best')
 
 
     st.pyplot(rmssd_fig)
@@ -264,16 +266,16 @@ def analyzer(df,start_time,end_time, openai_key, moments_df):
     ax.legend(loc='best')
 
 
-    if not moments_df.empty:
-        ymin, ymax = ax.get_ylim()
-        for moment in moments_df.index:
-            ax.axvline(x=moment, ymin=ymin, ymax=ymax, color='red', alpha=0.8)
-            # ax.text(0.5, -0.1, 'MOMENT', transform=ax.transAxes, ha='center', va='center')
-            ax.text(moment, ymin-0.1*(ymax-ymin), 'MOMENT', ha='center', va='center', color='red')
-            handles, labels = ax.get_legend_handles_labels()
-            handles.append(ax.axvline(x=moments_df.index[0], ymin=0, ymax=1, color='red'))
-            labels.append('moments')
-            ax.legend(handles, labels, loc='best')
+    # if not moments_df.empty:
+    #     ymin, ymax = ax.get_ylim()
+    #     for moment in moments_df.index:
+    #         ax.axvline(x=moment, ymin=ymin, ymax=ymax, color='red', alpha=0.8)
+    #         # ax.text(0.5, -0.1, 'MOMENT', transform=ax.transAxes, ha='center', va='center')
+    #         ax.text(moment, ymin-0.1*(ymax-ymin), 'MOMENT', ha='center', va='center', color='red')
+    #         handles, labels = ax.get_legend_handles_labels()
+    #         handles.append(ax.axvline(x=moments_df.index[0], ymin=0, ymax=1, color='red'))
+    #         labels.append('moments')
+    #         ax.legend(handles, labels, loc='best')
 
     st.pyplot(rhr_fig)
 
