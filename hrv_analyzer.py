@@ -208,6 +208,7 @@ def analyzer(df,start_time,end_time, openai_key, moments_df):
     # # Set the title of the plot
     # ax.set_title('Inter-Beat Intervals over Time')
     # fig = px.line(rr_intervals,markers=True)
+    st.write('HRV data is unsteady - a single movement can already mess up your HRV data. Use this plot to see whether your data is messy, usually denoted by straight lines')
     st.line_chart(rr_intervals)
     # st.table(rr_intervals.head())
     # st.table(df_window.head())
@@ -504,6 +505,8 @@ def main():
                     else:
                         st.write("No moments found")
                         moments_df = None
+                else:
+                    moments_df = None
         st.markdown("""---""")
         
         st.write('\n')
