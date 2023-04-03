@@ -463,7 +463,7 @@ def main():
 
         unique_dates = np.unique(df.index.date)
         start_date = st.selectbox(options=unique_dates,label='Start Date:')
-        start_time = st.text_input(label='Time:',placeholder=selmind)
+        start_time = st.text_input(label='Start Time:',placeholder=selmind)
         start_datetime_str = f"{start_date} {start_time}"
         if len(start_time) == 5:
             start_datetime = datetime.strptime(start_datetime_str, '%Y-%m-%d %H:%M')
@@ -471,7 +471,7 @@ def main():
 
         if start_time:
             end_date = st.selectbox(options=unique_dates,label='End Date:',index=len(unique_dates)-1)
-            end_time = st.text_input(label='Time:',placeholder=selmaxd)
+            end_time = st.text_input(label='End Time:',placeholder=selmaxd)
             # Concatenate the end date and end time strings
             end_datetime_str = f"{end_date} {end_time}"
             if len(end_time) == 5:
