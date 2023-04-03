@@ -485,7 +485,7 @@ def main():
                 if moments is not None:
                     filename = str(moments.name)
 
-                    if filename.startswith('system'):
+                    if 'system' in filename:
                         moments_df = pd.read_csv(moments).drop('value',axis=1)
                         moments_df['timestamp'] = pd.to_datetime(moments_df['timestamp'],unit='s')
                         moments_df = moments_df[moments_df['type'] == 'MOMENT']
@@ -494,7 +494,7 @@ def main():
                         if not moments_df.empty:
                             MOMENTS = True
                             st.write(moments_df)
-                    elif filename.startswith('moment'):                    
+                    elif 'moment' in filename:                    
                         if moments is not None:
                             moments_df = pd.read_csv(moments).drop('value',axis=1).set_index('timestamp')
                             moments_df = moments_df[moments_df['type'] == 'MOMENT']
@@ -506,7 +506,7 @@ def main():
                         st.write("No moments found")
                         moments_df = None
                 else:
-                    moments_df = None
+                    moments_df   = None
         st.markdown("""---""")
         
         st.write('\n')
