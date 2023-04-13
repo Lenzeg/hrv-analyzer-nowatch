@@ -33,7 +33,14 @@ st.markdown(css, unsafe_allow_html=True)
 
 def load_data(file):
     if file.name.endswith('.csv'):
-        df = pd.read_csv(file, index_col=0, parse_dates=True)
+        if 'heartbeat' in file.name:
+            df = pd.read_csv(file, index_col=0, parse_dates=True)
+        if 'inter' in file.name:
+            df = pd.read_csv(file)
+            df['timestamp'] = pd.to_datetime(df['timestamp'])
+            df['inter_beat_interval'] = df['inter_beat_interval'].astype(int)
+        
+
     elif file.name.endswith('.parquet'):
         df = pd.read_parquet(file)
         # print(df)
@@ -58,8 +65,10 @@ def load_data(file):
     # else:
     # print(df.index.dtype)
     if not str(df.index.dtype).startswith('datetime64'):
+        print('Indexing timestamp')
         df = df.set_index('timestamp')
 
+    st.write(df.head())
     # st.table(df.head())
     col_name = 'inter_beat_interval'
     return df, col_name
@@ -355,7 +364,7 @@ def analyzer(df,start_time,end_time, openai_key, moments_df):
             lf = int(float(frequency_values['lf']))
             hf = int(float(frequency_values['hf']))
             lf_hf = frequency_values['lf_hf_ratio']
-            prompt = f"Tell me about my HRV: RMSSD (ms): {rmssd_ms} and my LF, HF, and LF HF Ratio in Hz: , {lf, hf,lf_hf}. The total time of measurement was {diff} minutes. Don't use more than 200 words. Keep it simple and motivating, very positive, and talk about mental balance. Explain how it relates to mental balance. Always display the values."
+            prompt = f"Tell me about my HRV: RMSSD (ms): {rmssd_ms} and my LF, HF, and LF HF Ratio in Hz: , {lf, hf,lf_hf}. The total time of measurement was {diff} minutes. Don't use more than 200 words. Keep it simple and motivating, very positive. Explain how it relates to mental balance. Always display the values."
             # st.write(len(prompt))
             # if st.form_submit_button("Send"):
             with st.spinner("Generating response..."):
@@ -387,6 +396,7 @@ def analyzer(df,start_time,end_time, openai_key, moments_df):
 
 def get_time_range(df, timezone):
     # Convert the datetime index to the selected timezone
+    
     df.index = df.index + timedelta(hours=timezone)
     
     # Get the start and end datetime values as strings
@@ -405,7 +415,7 @@ def main():
     st.write('\n')
     st.markdown("""---""")
     format = st.radio(
-    "Uploading CSV or Parquet?",
+    "Uploading CSV or Parquet? (Large files? Use parquet)",
     ('CSV', 'Parquet'))
 
     if format == 'Parquet':
@@ -416,8 +426,11 @@ def main():
     else:
         file = st.file_uploader("Upload a csv file containing interbeat intervals. ",type='csv')
         
-        if file is not None:
+        if file is not None and file.name.startswith('heart'):
             df = process_ibi(file)
+        elif file is not None and file.name.startswith('inter'):
+            df, hrv_col = load_data(file)
+
             # st.table(df.head())
         # st.write("You didn\'t select comedy.")
     # file = st.file_uploader("Upload a parquet file containing interbeat intervals. ")
