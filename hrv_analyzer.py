@@ -79,41 +79,169 @@ def process_ibi(loc):
 
     # Value to Byte Array
     inter_beat_intervals = pd.read_csv(loc)
+    # print(inter_beat_intervals)
+    # print('value counts')
+    timestamp_counts = inter_beat_intervals['timestamp'].value_counts()
+    duplicates = timestamp_counts[timestamp_counts > 1]
+    # print(duplicates)
+
+
+    # print(inter_beat_intervals.value_counts()[inter_beat_intervals['timestamp'].value_counts() > 1])
+    # print('\n')
     inter_beat_intervals['bytes'] = inter_beat_intervals['value'].apply(lambda x: bytearray.fromhex(x))
-    inter_beat_intervals['inter_beat_interval'] = pd.Series(timestamp_conversion(inter_beat_intervals))
+    # inter_beat_intervals['inter_beat_interval'] = pd.Series(timestamp_conversion(inter_beat_intervals))
+    inter_beat_intervals = pd.DataFrame.from_dict(timestamp_conversion(inter_beat_intervals),orient='index')
     if 'datetime' in inter_beat_intervals:
         inter_beat_intervals.rename(columns={'datetime':'timestamp'},inplace=True)
 
-    inter_beat_intervals['timestamp'] = pd.to_datetime(inter_beat_intervals['timestamp'],unit='s')
-    inter_beat_intervals['timestamp'] = inter_beat_intervals['timestamp']
+    # st.table(inter_beat_intervals)
+    # inter_beat_intervals['time /stamp'] = pd.to_datetime(inter_beat_intervals['timestamp'],unit='s')
+    # print(inter_beat_intervals['timestamp'].head())
+    # print(inter_beat_intervals['timestamp'].describe())
+    # print(inter_beat_intervals.describe())
     inter_beat_intervals = inter_beat_intervals.set_index('timestamp')
     inter_beat_intervals = inter_beat_intervals.drop([x for x in candidates if x in inter_beat_intervals.columns], axis=1)
+
     return inter_beat_intervals
 
 def timestamp_conversion(df):
     # Create Numpy Array to Iterate Over
-    heartbeat_frames = np.array(df['value'])
+    # heartbeat_frames = np.array(df['value'])
+    # timestamp_frames = df['timestamp']
     # Deduce Data From Bytearray
-    times = []
-    for heartbeat_frame in heartbeat_frames:
-        frame_heartbeat_count = int(heartbeat_frame[1:2])
-        for heartbeat_index in range(1,frame_heartbeat_count+1):
-            index_start = 3+(heartbeat_index-1)*8
-            index_end = index_start + 4
-            time_bytes = heartbeat_frame[index_start*2:index_end*2]
-            time_hex = bytearray.fromhex(time_bytes)
-            times.append(int.from_bytes(time_hex, byteorder="little"))
+    # times = []
+    # doubles = 0
+    last_ibi = 0
+    i = 0
+    ibi_df = {}
+    for index, row in df.iterrows():
+        # st.write(row)
+        heartbeats = row['value']
+        
+        timestamp = row['timestamp']
+        timestamp = str(int(timestamp) * 1000)
+        # st.write(heartbeats)
+        # st.write(timestamp)
+        frame_heartbeat_count = int(heartbeats[1:2])
+        quality_indicator = int(heartbeats[5])
+        # st.write(quality_indicator)
+        if frame_heartbeat_count > 1:
+            # st.write('double')
+            for heartbeat_index in range(1,frame_heartbeat_count+1): 
+                # st.write(heartbeat_index)  
+                index_start = 3+(heartbeat_index-1)*8
+                index_end = index_start + 4
+                time_bytes = heartbeats[index_start*2:index_end*2]
+                time_hex = bytearray.fromhex(time_bytes)
+                ibi = int.from_bytes(time_hex, byteorder="little")
+                if last_ibi > 0:
+                    temp = ibi
+                    ibi = ibi - last_ibi
+                    last_ibi = temp
+                else:
+                    last_ibi = ibi
+                
+                # st.write(timestamp)
+
+                datetime = pd.to_datetime(timestamp, unit='ms')
+                if heartbeat_index == 1:
+                    if i == 0:
+                        datetime = datetime + pd.Timedelta(milliseconds=0.01)
+                        ibi = 1000
+                    else:
+                        datetime = datetime + pd.Timedelta(milliseconds=0.01)
+
+                else:
+                    datetime = datetime + pd.Timedelta(milliseconds=ibi)
+                # datetime = pd.to_datetime(timestamp,unit='ms')
+                # datetime = datetime.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3] + '000'
+
+                if ibi > 300 and ibi < 2000:
+                    ibi_df[i] = {'timestamp':datetime, 'inter_beat_interval': ibi, 'quality_indicator': quality_indicator}
+                    # if i > 0:                                              
+                    #     diff_seconds = (ibi_df[i]['timestamp'] - ibi_df[i-1]['timestamp']).total_seconds() 
+                    #     if diff_seconds >= 1.8 and ibi_df[i]['inter_beat_interval'] > 1800:
+                    #         ibi_df[i]['inter_beat_interval'] = int(ibi_df[i]['inter_beat_interval']/diff_seconds)
+                # ibi_df[i] = {'timestamp':datetime, 'inter_beat_interval': ibi, 'quality_indicator': quality_indicator}
+                # if i > 0:
+                #     diff_seconds = (ibi_df[i]['timestamp'] - ibi_df[i-1]['timestamp']).total_seconds() 
+                #     if diff_seconds > 1.8:
+                #         ibi_df[i]['inter_beat_interval'] = int(ibi_df[i]['inter_beat_interval']/diff_seconds)
+                    # st.write('timestamp difference:', diff_seconds)
+                # st.write(ibi_df[i])
+                # st.write(ibi_df[i])
+                i += 1
+        else:
+            for heartbeat_index in range(1,2):   
+                index_start = 3+(heartbeat_index-1)*8
+                index_end = index_start + 4
+                time_bytes = heartbeats[index_start*2:index_end*2]
+                time_hex = bytearray.fromhex(time_bytes)
+                ibi = int.from_bytes(time_hex, byteorder="little")
+
+                if last_ibi > 0:
+                    # st.write('IBI:', ibi, 'LAST IBI', last_ibi)
+                    temp = ibi
+                    ibi = ibi - last_ibi
+                    last_ibi = temp
+                    # last_ibi =
+                    # st.write(last_ibi)
+                    # st.write(ibi)
+                else:
+                    last_ibi = ibi
+                    # st.write(last_ibi)
+                datetime = pd.to_datetime(timestamp, unit='ms')
+                if i == 0:
+                    datetime = datetime + pd.Timedelta(milliseconds=0.01)
+                    ibi = 1000
+                else:
+                    datetime = datetime + pd.Timedelta(milliseconds=0.01)
+
+                if ibi > 300 and ibi < 2000:
+                    ibi_df[i] = {'timestamp':datetime, 'inter_beat_interval': ibi, 'quality_indicator': quality_indicator}
+                    # if i > 0:                                              
+                    #     diff_seconds = (ibi_df[i]['timestamp'] - ibi_df[i-1]['timestamp']).total_seconds() 
+                    #     if diff_seconds >= 1.8 and ibi_df[i]['inter_beat_interval'] > 1800:
+                    #         ibi_df[i]['inter_beat_interval'] = int(ibi_df[i]['inter_beat_interval']/diff_seconds)
+                # print(ibi_df[i])
+                    # st.write('timestamp difference:', diff_seconds)
+                i += 1
+        # if i == 30:
+            # break
+    # st.write(ibi_df)
+
+
+    
+    # for heartbeat_frame in heartbeat_frames:
+    #     frame_heartbeat_count = int(heartbeat_frame[1:2])
+    #     # if int(frame_heartbeat_count) > 1:
+    #         # print(frame_heartbeat_count) 
+    #         # print("New frame")
+    #     if int(frame_heartbeat_count) > 1:
+    #         doubles += 1
+    #     for heartbeat_index in range(1,frame_heartbeat_count+1):
+            
+    #         index_start = 3+(heartbeat_index-1)*8
+    #         index_end = index_start + 4
+    #         time_bytes = heartbeat_frame[index_start*2:index_end*2]
+    #         time_hex = bytearray.fromhex(time_bytes)
+    #         if int(frame_heartbeat_count) > 1:
+    #             print(int.from_bytes(time_hex, byteorder="little"))
+    #         times.append(int.from_bytes(time_hex, byteorder="little"))
 
     # Convert to Time array in ms format
-    times_ms = []
-    for time_index in range(1, len(times)):
-        baseline_time = times[time_index-1]
-        comparison_time = times[time_index]
-        inter_beat_interval = comparison_time - baseline_time
-        if inter_beat_interval > 300 and inter_beat_interval < 2500:
-            times_ms.append(comparison_time - baseline_time)
+    # times_ms = []
+    # for time_index in range(1, len(times)):
+    #     baseline_time = times[time_index-1]
+    #     comparison_time = times[time_index]
+    #     inter_beat_interval = comparison_time - baseline_time
+    #     if inter_beat_interval > 300 and inter_beat_interval < 2500:
+    #         times_ms.append(comparison_time - baseline_time)
+    # print(len(times_ms))
+    # print(doubles)
 
-    return times_ms
+    return ibi_df
+
 
 def get_rhr(rr):
     hr = 60000/rr
@@ -418,6 +546,7 @@ def main():
     "Uploading CSV or Parquet? (Large files? Use parquet)",
     ('CSV', 'Parquet'))
 
+    st.write('UPDATE 2023-04-18: \nFile loading may take a little longer due to some extra checks on the data. Be patient :-)')
     if format == 'Parquet':
         file = st.file_uploader("Upload a parquet file containing interbeat intervals. ",type='parquet')
         if file is not None:
@@ -430,6 +559,7 @@ def main():
             df = process_ibi(file)
         elif file is not None and file.name.startswith('inter'):
             df, hrv_col = load_data(file)
+
 
             # st.table(df.head())
         # st.write("You didn\'t select comedy.")
